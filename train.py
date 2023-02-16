@@ -150,18 +150,20 @@ class TrainStepPerformer:
     acc_grads = [tf.zeros_like(var) for var in self.transducer.trainable_variables]
     acc_loss = 0
     for i in range(0, len(labels), batch_size):
-      label_lengths = self.get_label_lengths(labels)
+      batch_labels = labels[i: i + batch_size]
+      batch_spectrograms = spectrograms[i: i + batch_size]
+      label_lengths = self.get_label_lengths(batch_labels)
       label_lengths = tf.convert_to_tensor(label_lengths, dtype=tf.int32)
-      labels = pad_sequences(labels, maxlen=self.get_labels_maxlen(labels), truncating='post', padding='post')
-      labels = tf.constant(labels, dtype=tf.int32)
-      spectrogram_lengths = self.get_spectrogram_lengths(spectrograms)
+      batch_labels = pad_sequences(batch_labels, maxlen=self.get_labels_maxlen(batch_labels), truncating='post', padding='post')
+      batch_labels = tf.constant(batch_labels, dtype=tf.int32)
+      spectrogram_lengths = self.get_spectrogram_lengths(batch_spectrograms)
       spectrogram_lengths = tf.convert_to_tensor(spectrogram_lengths, dtype=tf.int32)
-      spectrograms = tf.cast(pad_sequences(spectrograms, maxlen=self.get_spectrograms_maxlen(spectrograms), truncating='post', padding='post'), dtype=tf.float32)
+      batch_spectrograms = tf.cast(pad_sequences(batch_spectrograms, maxlen=self.get_spectrograms_maxlen(batch_spectrograms), truncating='post', padding='post'), dtype=tf.float32)
       with tf.GradientTape() as tape:
-        logits = self.transducer([spectrograms, labels])
+        logits = self.transducer([batch_spectrograms, batch_labels])
         loss = rnnt_loss(
           logits,
-          labels,
+          batch_labels,
           spectrogram_lengths,
           label_lengths
         )
@@ -225,7 +227,7 @@ class SavableTrainStepPerformerLoader:
       progress = pickle.load(f)
     transducer = Transducer(*model_meta)
     transducer([
-      tf.keras.Input(shape=(None, 128), dtype=tf.float32),
+      tf.keras.Input(shape=(None, 80), dtype=tf.float32),
       tf.keras.Input(shape=(None, ), dtype=tf.int32)
     ])
     transducer.load_weights(os.path.join(path, 'checkpoints/ep{}_no{}/ckpt'.format(progress[0], progress[1])))
@@ -335,7 +337,7 @@ class SimplePolicyGenerator:
     model_meta = (embedding_dim, units, coder_output_dim, joint_net_inner_dim, vocab_size)
     transducer = Transducer(*model_meta)
     transducer([
-      tf.keras.Input(shape=(None, 128), dtype=tf.float32),
+      tf.keras.Input(shape=(None, 80), dtype=tf.float32),
       tf.keras.Input(shape=(None, ), dtype=tf.int32)
     ])
 
@@ -405,48 +407,46 @@ class SimplePolicyLoader:
       prev_save_time
     )
     return policy
-
+  
 if __name__ == '__main__':
   EMBEDDING_DIM = 128
   UNITS = 1024
-  CODER_OUTPUT_DIM = 512
-  JOINT_NET_INNER_DIM = 512
+  CODER_OUTPUT_DIM = 320
+  JOINT_NET_INNER_DIM = 320
 
   EPOCHS = 20
-  BATCH_SIZE = 32
-  BATCH_NUM = 1
-  TIME_LIMIT = 160
-  LABEL_LIMIT = 50
+  BATCH_SIZE = 8
+  BATCH_NUM = 4
   LEARNING_RATE = 0.00001
-  SAVE_PATH = 'saves/train_state3'
+  SAVE_PATH = 'saves/train_state4'
   SAVE_TIME_DELTA = 10000
 
-  policy, initial_save_notifier = SimplePolicyGenerator.generate(
-    SAVE_PATH,
-    'saves/dataset.h5',
-    EMBEDDING_DIM,
-    UNITS,
-    CODER_OUTPUT_DIM,
-    JOINT_NET_INNER_DIM,
-    len(PhonemeDictLoader('saves/phoneme_dict.pickle').phonemes),
-    EPOCHS,
-    BATCH_SIZE,
-    BATCH_NUM,
-    LEARNING_RATE,
-    SAVE_TIME_DELTA
-  )
-  policy.step_performer.transducer.summary()
-  initial_save_notifier.initial_save()
-
-  # policy = SimplePolicyLoader.load(
+  # policy, initial_save_notifier = SimplePolicyGenerator.generate(
   #   SAVE_PATH,
-  #   'saves/dataset.h5',
+  #   'saves/dataset_large.h5',
+  #   EMBEDDING_DIM,
+  #   UNITS,
+  #   CODER_OUTPUT_DIM,
+  #   JOINT_NET_INNER_DIM,
+  #   len(PhonemeDictLoader('saves/phoneme_dict.pickle').phonemes),
   #   EPOCHS,
   #   BATCH_SIZE,
   #   BATCH_NUM,
   #   LEARNING_RATE,
   #   SAVE_TIME_DELTA
   # )
+  # policy.step_performer.transducer.summary()
+  # initial_save_notifier.initial_save()
+
+  policy = SimplePolicyLoader.load(
+    SAVE_PATH,
+    'saves/dataset_large.h5',
+    EPOCHS,
+    BATCH_SIZE,
+    BATCH_NUM,
+    LEARNING_RATE,
+    SAVE_TIME_DELTA
+  )
 
   with tf.device('/gpu:0'):
     policy.train()

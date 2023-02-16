@@ -108,8 +108,13 @@ def moasseugi(inputtext):
 
   return hangeulJoin(t1)
 
-def extract_spectrogram (path, sr=16000, n_fft=320, hop_len=160, n_mels=128):
-  waveform = np.memmap(path, dtype='h', mode='r')
+def extract_spectrogram (path, sr=16000, n_fft=320, hop_len=160, n_mels=80):
+  # waveform = np.memmap(path, dtype='h', mode='r')
+
+  with open(path, 'rb') as f:
+    bytes = f.read()
+    f.close()
+  waveform = np.frombuffer(bytes[0: len(bytes) - len(bytes) % 2], dtype=np.int16)
 
   S = librosa.feature.melspectrogram(y=np.float32(waveform), n_fft=n_fft, hop_length=hop_len, window='hamming', sr=sr, n_mels=n_mels)
   log_S = librosa.power_to_db(S, ref=np.max)

@@ -28,9 +28,9 @@ class DatasetManufacturer:
     random.shuffle(lines)
     f = h5py.File(output_path, 'w')
 
-    f.create_dataset('mel_specs', dtype=h5py.vlen_dtype('float32'), maxshape=(len(lines), ), shape=(0, ), chunks=(1, ))
-    f.create_dataset('mel_specs_shape', dtype='int32', maxshape=(len(lines), 2), shape=(0, 2), chunks=(1, 2))
-    f.create_dataset('labels', dtype=h5py.vlen_dtype('int32'), maxshape=(len(lines), ), shape=(0, ), chunks=(1, ))
+    f.create_dataset('mel_specs', dtype=h5py.vlen_dtype('float32'), maxshape=(len(lines), ), shape=(0, ), chunks=(self.chunk_size, ))
+    f.create_dataset('mel_specs_shape', dtype='int32', maxshape=(len(lines), 2), shape=(0, 2), chunks=(self.chunk_size, 2))
+    f.create_dataset('labels', dtype=h5py.vlen_dtype('int32'), maxshape=(len(lines), ), shape=(0, ), chunks=(self.chunk_size, ))
     cur_idx = 0
     for i in range(0, len(lines), self.workers_num * self.work_size):
       print(i)
@@ -66,7 +66,7 @@ class DatasetManufacturer:
       cur_idx += len(mel_specs)
     f.close()
 
-def process (lines, path, phoneme_index, mel_spec_size_limit, label_size_limit, sr=16000, n_fft=512, hop_len=256, n_mels=128):
+def process (lines, path, phoneme_index, mel_spec_size_limit, label_size_limit, sr=16000, n_fft=320, hop_len=160, n_mels=80):
   def process_line (line: str):
     line = line.split(' :: ')
     line[0] = os.path.join(path, 'audio', line[0])
@@ -89,7 +89,7 @@ def process (lines, path, phoneme_index, mel_spec_size_limit, label_size_limit, 
 if __name__ == '__main__':
   start = time.time()
   phoneme_dict = PhonemeDictLoader('saves/phoneme_dict.pickle')
-  manaufacturer = DatasetManufacturer(phoneme_dict, 14, 2000, 20000, 160, 50)
-  manaufacturer.manufacture('../stt/ko-audio-dataset', 'saves/no_chunk_dataset2.h5')
+  manaufacturer = DatasetManufacturer(phoneme_dict, 10, 2000, 1, 480, 100)
+  manaufacturer.manufacture('../stt/ko-audio-dataset', 'saves/dataset_large.h5')
   end = time.time()
   print(end - start)
