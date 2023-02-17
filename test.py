@@ -1,5 +1,8 @@
+from trainer import InitialLossSaver
 import h5py
+import pickle
 
-with h5py.File('saves/train-state5/loss.h5', 'r') as f:
-  print(f['loss'][0])
-  f.close()
+with open('saves/train_state7/prev_save_time.pickle', 'rb') as f:
+  a = pickle.load(f)
+
+print(a)

@@ -37,14 +37,14 @@ def decode_with_hint (logits):
 if __name__ == '__main__':
   EMBEDDING_DIM = 128
   UNITS = 1024
-  CODER_OUTPUT_DIM = 512
-  JOINT_NET_INNER_DIM = 512
+  CODER_OUTPUT_DIM = 320
+  JOINT_NET_INNER_DIM = 320
 
   phoneme_dict = PhonemeDictLoader('saves/phoneme_dict.pickle')
   transducer = Transducer(EMBEDDING_DIM, UNITS, CODER_OUTPUT_DIM, JOINT_NET_INNER_DIM, len(phoneme_dict.phonemes))
-  transducer.load_weights('saves/train_state3/checkpoints/ep13_no110176/ckpt')
+  transducer.load_weights('saves/train_state5/checkpoints/ep0_no216032/ckpt')
   decoder = AudioDecoder(transducer)
-  f = h5py.File('saves/dataset.h5')
+  f = h5py.File('saves/dataset_large.h5')
   mel_specs = [np.reshape(mel_spec, mel_spec_shape) for mel_spec, mel_spec_shape in zip(f['mel_specs'][0: 10], f['mel_specs_shape'][0: 10])]
   for mel_spec, label in zip(mel_specs, f['labels'][0: 10]):
     print(kadu.moasseugi(kadu.vector_to_sentence(phoneme_dict, label)))

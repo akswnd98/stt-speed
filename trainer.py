@@ -12,6 +12,7 @@ from dataset_shuffler import DatasetShuffler
 import h5py
 import tensorflow as tf
 from phoneme_dict import PhonemeDictLoader
+import time
 
 # initial save
 
@@ -72,7 +73,7 @@ class SimpleGenerator:
               ProgressionPrinter(cur_epoch_model, cnt_model, loss_model),
               StepEndProgressionSaveNotifier([
                 CntSaver(base_path, cnt_model),
-                PrevSaveTimeSaver(base_path, prev_save_time_model),
+                PrevSaveTimeSaver(base_path, cnt_model),
                 loss_saver,
                 TransducerSaver(base_path, transducer, cur_epoch_model, cnt_model)
               ], save_time_delta, prev_save_time_model, cnt_model)
@@ -91,7 +92,7 @@ class SimpleGenerator:
           EpochEndProgressionSaveNotifier([
             CurEpochSaver(base_path, cur_epoch_model),
             CntSaver(base_path, cnt_model),
-            PrevSaveTimeSaver(base_path, prev_save_time_model),
+            PrevSaveTimeSaver(base_path, cnt_model),
             loss_saver,
             TransducerSaver(base_path, transducer, cur_epoch_model, cnt_model)
           ], prev_save_time_model, cnt_model)
@@ -142,7 +143,7 @@ class SimpleLoader:
               ProgressionPrinter(cur_epoch_model, cnt_model, loss_model),
               StepEndProgressionSaveNotifier([
                 CntSaver(base_path, cnt_model),
-                PrevSaveTimeSaver(base_path, prev_save_time_model),
+                PrevSaveTimeSaver(base_path, cnt_model),
                 loss_saver,
                 TransducerSaver(base_path, transducer, cur_epoch_model, cnt_model)
               ], save_time_delta, prev_save_time_model, cnt_model)
@@ -161,7 +162,7 @@ class SimpleLoader:
           EpochEndProgressionSaveNotifier([
             CurEpochSaver(base_path, cur_epoch_model),
             CntSaver(base_path, cnt_model),
-            PrevSaveTimeSaver(base_path, prev_save_time_model),
+            PrevSaveTimeSaver(base_path, cnt_model),
             loss_saver,
             TransducerSaver(base_path, transducer, cur_epoch_model, cnt_model)
           ], prev_save_time_model, cnt_model)
@@ -475,8 +476,8 @@ class CntSaver (PickleSaver):
     super(CntSaver, self).__init__(os.path.join(base_path, 'cnt.pickle'), cnt_model)
 
 class PrevSaveTimeSaver (PickleSaver):
-  def __init__ (self, base_path, prev_save_time_model):
-    super(PrevSaveTimeSaver, self).__init__(os.path.join(base_path, 'prev_save_time.pickle'), prev_save_time_model)
+  def __init__ (self, base_path, cnt_model):
+    super(PrevSaveTimeSaver, self).__init__(os.path.join(base_path, 'prev_save_time.pickle'), cnt_model)
 
 class LossSaver (Saver):
   def __init__ (self, base_path, loss_model):

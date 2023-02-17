@@ -89,7 +89,7 @@ def process (lines, path, phoneme_index, mel_spec_size_limit, label_size_limit, 
 if __name__ == '__main__':
   start = time.time()
   phoneme_dict = PhonemeDictLoader('saves/phoneme_dict.pickle')
-  manaufacturer = DatasetManufacturer(phoneme_dict, 10, 2000, 1, 480, 100)
+  manaufacturer = DatasetManufacturer(phoneme_dict, 14, 2000, 1, 360, 80)
   manaufacturer.manufacture('../stt/ko-audio-dataset', 'saves/dataset_large.h5')
   end = time.time()
   print(end - start)
